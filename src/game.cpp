@@ -482,8 +482,10 @@ void Game::playGame(ContinueStatus cont) {
   constexpr auto finish_entry_text = R"(
           1. Play a New Game
           2. Go back to Menu
-          3. Exit
+          3. Exit (3 or Else)
   )";
+
+  bool err = 0;
 
   std::ostringstream choice_richtext;
   choice_richtext << "  " << choice_text;
@@ -508,7 +510,7 @@ void Game::playGame(ContinueStatus cont) {
       Menu menu;
       menu.startMenu();
       break;
-    case '3':
+    default:
       exit(EXIT_SUCCESS);
   }
 
