@@ -1,4 +1,5 @@
 #include "game.hpp"
+#include "menu.hpp"
 
 namespace {
 namespace Keypress {
@@ -475,6 +476,41 @@ void Game::playGame(ContinueStatus cont) {
     newline(2);
     saveScore();
   }
+
+  constexpr auto choice_text = "Enter Choice: ";
+  constexpr auto finish_entry_text = R"(
+          1. Play a New Game
+          2. Go back to Menu
+          3. Exit
+  )";
+
+  std::ostringstream choice_richtext;
+  choice_richtext << " " << choice_text;
+  
+  str_os << choice_richtext.str();
+  str_os << finish_entry_text;
+  std::cout<<str_os.str();
+  char c;
+  std::cin>>c;
+
+  if(std::cin.eof()){
+    std::cout << std::endl;
+    exit(EXIT_SUCCESS);
+  }
+
+  
+
+  switch(c){
+    case '1':
+      break;
+    case '2':
+      Menu menu;
+      menu.startMenu();
+      break;
+    case '3':
+      exit(EXIT_SUCCESS);
+  }
+
 }
 
 ull Game::setBoardSize() {
