@@ -460,7 +460,6 @@ void Game::playGame(ContinueStatus cont) {
   auto finishTime = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = finishTime - startTime;
   duration = elapsed.count();
-
   std::ostringstream str_os;
   if (gamePlayBoard.hasWon()) {
     str_os << win_richtext.str();
@@ -477,6 +476,8 @@ void Game::playGame(ContinueStatus cont) {
     saveScore();
   }
 
+  std::ostringstream str_os1;
+
   constexpr auto choice_text = "Enter Choice: ";
   constexpr auto finish_entry_text = R"(
           1. Play a New Game
@@ -485,11 +486,10 @@ void Game::playGame(ContinueStatus cont) {
   )";
 
   std::ostringstream choice_richtext;
-  choice_richtext << " " << choice_text;
-  
-  str_os << choice_richtext.str();
-  str_os << finish_entry_text;
-  std::cout<<str_os.str();
+  choice_richtext << "  " << choice_text;
+  str_os1 << choice_richtext.str();
+  str_os1 << finish_entry_text;
+  std::cout<<str_os1.str();
   char c;
   std::cin>>c;
 
