@@ -502,6 +502,7 @@ void Game::playGame(ContinueStatus cont) {
 
   switch(c){
     case '1':
+      startGame();
       break;
     case '2':
       Menu menu;
