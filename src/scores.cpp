@@ -77,8 +77,13 @@ void Scoreboard::printScore() {
                     std::to_string(i.score),     i.win ? "Yes" : "No",
                     std::to_string(i.moveCount), std::to_string(i.largestTile),
                     secondsFormat(i.duration)};
+      int hang=0, k;
+      for(k=0;k<data_stats[1].length();k++){
+          if(data_stats[1][k]<0) hang++;
+      }
+      hang = hang/3;
       str_os << sp << "│ " << std::setw(2) << data_stats[0] << ". │ "
-             << std::left << std::setw(18) << data_stats[1] << std::right
+             << std::left <<std::setw(18+hang) << data_stats[1] << std::right 
              << " │ " << std::setw(8) << data_stats[2] << " │ " << std::setw(4)
              << data_stats[3] << " │ " << std::setw(5) << data_stats[4] << " │ "
              << std::setw(12) << data_stats[5] << " │ " << std::setw(12)
