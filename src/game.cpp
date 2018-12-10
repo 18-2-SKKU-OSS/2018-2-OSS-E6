@@ -1,6 +1,7 @@
 #include "game.hpp"
 #include "menu.hpp"
 
+
 namespace {
 namespace Keypress {
 namespace Code {
@@ -37,7 +38,7 @@ enum {
 };
 
 enum { CODE_HOTKEY_ACTION_SAVE = 'Z', CODE_HOTKEY_ALTERNATE_ACTION_SAVE = 'P' };
-
+enum {CODE_RETURN_MENU = 'M'};
 } // namespace Code
 } // namespace Keypress
 
@@ -246,17 +247,16 @@ void Game::input(KeyInputErrorStatus err) {
   S or J or ↓ => Down
   D or L or → => Right
   Z or P => Save
+  M => Back to Menu
 
   Press the keys to start and continue.
 
 )";
-
   constexpr auto invalid_prompt_text = "Invalid input. Please try again.";
   constexpr auto sp = "  ";
   std::ostringstream str_os;
   std::ostringstream invalid_prompt_richtext;
   invalid_prompt_richtext << red << sp << invalid_prompt_text << def << "\n\n";
-
   str_os << input_commands_text;
 
   if (err == KeyInputErrorStatus::STATUS_INPUT_ERROR) {
@@ -312,6 +312,10 @@ void Game::input(KeyInputErrorStatus err) {
   case CODE_HOTKEY_ALTERNATE_ACTION_SAVE:
     saveState();
     stateSaved = true;
+    break;
+  case CODE_RETURN_MENU:
+    Menu menu;
+    menu.startMenu();
     break;
   default:
     drawBoard();
@@ -375,7 +379,7 @@ void Game::statistics() const {
 
 void Game::saveStats() const {
   Stats stats;
-  stats.collectStatistics();
+  stats.collectStatistics(gamePlayBoard.getPlaySize());
   stats.bestScore = stats.bestScore < gamePlayBoard.score ?
                         gamePlayBoard.score :
                         stats.bestScore;
@@ -384,7 +388,12 @@ void Game::saveStats() const {
   stats.totalMoveCount += gamePlayBoard.MoveCount();
   stats.totalDuration += duration;
 
-  std::fstream statistics("../data/statistics.txt");
+  std::string file_dir = "../data/statistics" + std::to_string(gamePlayBoard.getPlaySize()) + ".txt";
+  char dir[50];
+  sprintf(dir, "../data/statistics%d.txt", gamePlayBoard.getPlaySize());
+
+  std::remove(dir);
+  std::fstream statistics(file_dir,std::ios_base::app);
   statistics << stats.bestScore << std::endl
              << stats.gameCount << std::endl
              << stats.winCount << std::endl
@@ -396,6 +405,7 @@ void Game::saveStats() const {
 
 void Game::saveScore() const {
   Scoreboard s;
+  s.playsize = gamePlayBoard.getPlaySize();
   s.score = gamePlayBoard.score;
   s.win = gamePlayBoard.hasWon();
   s.moveCount = gamePlayBoard.MoveCount();
@@ -460,6 +470,7 @@ void Game::playGame(ContinueStatus cont) {
   auto finishTime = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = finishTime - startTime;
   duration = elapsed.count();
+
   std::ostringstream str_os;
   if (gamePlayBoard.hasWon()) {
     str_os << win_richtext.str();
@@ -468,8 +479,7 @@ void Game::playGame(ContinueStatus cont) {
   }
   std::cout << str_os.str();
 
-  if (gamePlayBoard.getPlaySize() == COMPETITION_GAME_BOARD_PLAY_SIZE &&
-      cont == ContinueStatus::STATUS_END_GAME) {
+  if(cont == ContinueStatus::STATUS_END_GAME) {
     statistics();
     saveStats();
     newline(2);
@@ -489,6 +499,7 @@ void Game::playGame(ContinueStatus cont) {
 
   std::ostringstream choice_richtext;
   choice_richtext << "  " << choice_text;
+  str_os1 << "\n";
   str_os1 << choice_richtext.str();
   str_os1 << finish_entry_text;
   std::cout<<str_os1.str();
@@ -500,7 +511,7 @@ void Game::playGame(ContinueStatus cont) {
     exit(EXIT_SUCCESS);
   }
 
-  
+
 
   switch(c){
     case '1':
@@ -523,7 +534,7 @@ ull Game::setBoardSize() {
   constexpr auto no_save_found_text =
       "No saved game found. Starting a new game.";
   constexpr auto board_size_prompt_text =
-      "Enter gameboard size (NOTE: Scores and statistics will be saved only for the 4x4 gameboard): ";
+      "Enter gameboard size (3x3 to 10x10). If you want to go back, enter '0': ";
   constexpr auto sp = "  ";
 
   enum { MIN_GAME_BOARD_PLAY_SIZE = 3, MAX_GAME_BOARD_PLAY_SIZE = 10 };
@@ -564,6 +575,10 @@ ull Game::setBoardSize() {
     std::cin.clear();
     std::cin.ignore(std::numeric_limits<std::int32_t>::max(), '\n');
     err = true;
+    if(userInput_PlaySize==0){
+      Menu menu;
+      menu.startMenu();
+    }
   }
   return userInput_PlaySize;
 }
@@ -571,11 +586,11 @@ ull Game::setBoardSize() {
 void Game::startGame() {
 
   Stats stats;
-  if (stats.collectStatistics()) {
-    bestScore = stats.bestScore;
-  }
 
   ull userInput_PlaySize = setBoardSize();
+  if (stats.collectStatistics(userInput_PlaySize)) {
+    bestScore = stats.bestScore;
+  }
 
   gamePlayBoard = GameBoard(userInput_PlaySize);
   gamePlayBoard.addTile();
@@ -586,11 +601,10 @@ void Game::startGame() {
 void Game::continueGame() {
 
   Stats stats;
-  if (stats.collectStatistics()) {
-    bestScore = stats.bestScore;
-  }
-
   if (initialiseContinueBoardArray()) {
+    if (stats.collectStatistics(gamePlayBoard.getPlaySize())) {
+      bestScore = stats.bestScore;
+    }
     playGame(ContinueStatus::STATUS_CONTINUE);
   } else {
     noSave = true;
